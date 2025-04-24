@@ -1,0 +1,26 @@
+#!/bin/sh
+
+if [ "$(id -u)" != "0" ]; then
+  echo "$(basename $0): Operation not permitted, must be root." >&2
+  exit 1
+fi
+
+logger -s -p user.info -t "$(basename $0)[$$]" "Executing shutdown scripts in /etc/init.d"
+/etc/init.d/rcK
+
+CMD=$(basename $0)
+ARGS="$@"
+if [ "${CMD}" == "shutdown" ]; then
+  CMD="poweroff"
+  ARGS=""
+  while getopts ":r" opt; do
+    case $opt in
+      r)
+        CMD="reboot"
+        ;;
+    esac
+  done
+fi
+
+logger -s -p user.info -t "$(basename $0)[$$]" "${CMD} ${ARGS}"
+busybox ${CMD} ${ARGS}

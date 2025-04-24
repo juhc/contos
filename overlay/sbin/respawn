@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+logger -s -p user.info -t "respawn[$$]" "$*"
+while true; do
+  setsid $* &
+  wait
+done

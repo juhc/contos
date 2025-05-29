@@ -12,7 +12,9 @@ rsync -a --ignore-times \
   package/skeleton-init-sysv/skeleton/ ${ROOTFS}/
 
 # Remove useless kernel modules, based on unclejack/debian2docker
-cd ${ROOTFS}/lib/modules
+if [ -d "${ROOTFS}/lib/modules" ]; then
+  cd ${ROOTFS}/lib/modules
+  cd ${ROOTFS}/lib/modules
 rm -rf ./*/kernel/build
 rm -rf ./*/kernel/source
 rm -rf ./*/kernel/sound/*
@@ -27,6 +29,7 @@ rm -rf ./*/kernel/fs/reiserfs/*
 rm -rf ./*/kernel/net/bluetooth/*
 rm -rf ./*/kernel/net/mac80211/*
 rm -rf ./*/kernel/net/wireless/*
+fi
 
 # Strip kernel modules
 GNU_TARGET_NAME=x86_64-buildroot-linux-gnu
@@ -130,9 +133,11 @@ fi
 STAGING_DIR=${ROOTFS}/../host/${GNU_TARGET_NAME}/sysroot
 
 # Install locale command
-install -m 0755 -D ${STAGING_DIR}/usr/bin/locale ${ROOTFS}/usr/bin/locale
-STRIP=${GNU_TARGET_NAME}-strip
-${STRIP} --remove-section=.comment --remove-section=.note ${ROOTFS}/usr/bin/locale
+if [ -x "${STAGING_DIR}/usr/bin/locale" ]; then
+  install -m 0755 -D ${STAGING_DIR}/usr/bin/locale ${ROOTFS}/usr/bin/locale
+  STRIP=${GNU_TARGET_NAME}-strip
+  ${STRIP} --remove-section=.comment --remove-section=.note ${ROOTFS}/usr/bin/locale
+fi
 
 # Install C.UTF-8 locale
 mkdir -p ${ROOTFS}/usr/lib/locale

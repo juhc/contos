@@ -1,4 +1,4 @@
-KERNEL_VERSION  := 4.14.282
+KERNEL_VERSION  := 6.1.140
 BUSYBOX_VERSION := 1.35.0
 
 OUTPUTS := output/rootfs.tar.xz output/bzImage output/contos.iso output/contos.img

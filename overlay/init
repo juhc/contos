@@ -55,9 +55,9 @@ ln -sf /proc/self/fd/2 /dev/stderr
 passwd -l root
 
 MOUNT_POINT="/mnt/data"
-logger -s -p user.info -t "init[$$]" "Mounting HDD LABEL=BARGE-DATA"
+logger -s -p user.info -t "init[$$]" "Mounting HDD LABEL=CONTOS-DATA"
 mkdir -p "${MOUNT_POINT}"
-if ! mount -t ext4 'LABEL=BARGE-DATA' "${MOUNT_POINT}"; then
+if ! mount -t ext4 'LABEL=CONTOS-DATA' "${MOUNT_POINT}"; then
   logger -s -p user.info -t "init[$$]" "Running from memory, this won't be good..."
 else
   if [ ! -d "${MOUNT_POINT}/home" ]; then
@@ -81,9 +81,9 @@ else
   mount --bind "${MOUNT_POINT}" "${OLD_ONE}"
 fi
 
-logger -s -p user.info -t "init[$$]" "Enabling SWAP LABEL=BARGE-SWAP"
-if ! swapon 'LABEL=BARGE-SWAP'; then
-  logger -s -p user.info -t "init[$$]" "Could not make swap on LABEL=BARGE-SWAP"
+logger -s -p user.info -t "init[$$]" "Enabling SWAP LABEL=CONTOS-SWAP"
+if ! swapon 'LABEL=CONTOS-SWAP'; then
+  logger -s -p user.info -t "init[$$]" "Could not make swap on LABEL=CONTOS-SWAP"
 fi
 
 if [ -x /etc/init.d/init.sh ]; then

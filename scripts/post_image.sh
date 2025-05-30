@@ -1,71 +1,45 @@
 #!/bin/bash
 set -e
 
-IMAGES=$1
+IMAGES="$1"
+ISO="${IMAGES}/iso"
+ROOTFS="${IMAGES}/rootfs.tar"
+DISK_IMG="${IMAGES}/contos.img"
+ISO_IMG="${IMAGES}/contos.iso"
 
-ISO=${IMAGES}/iso
+echo ">>> [INFO] Creating output directories..."
+mkdir -p "${ISO}"
+mkdir -p "${IMAGES}/mnt"
 
-mkdir -p ${ISO}/boot
-cp ${IMAGES}/bzImage ${ISO}/boot/bzImage
+echo ">>> [INFO] Extracting rootfs..."
+tar -xf "${ROOTFS}" -C "${ISO}"
 
-ROOTFS=/tmp/root
-mkdir -p ${ROOTFS}
-tar xJf ${IMAGES}/rootfs.tar.xz -C ${ROOTFS}
-cd ${ROOTFS}
-find | cpio -H newc -o | xz -9 -C crc32 -c > ${ISO}/boot/initrd
-
-mkdir -p ${ISO}/boot/isolinux
-cp /usr/lib/syslinux/isolinux.bin ${ISO}/boot/isolinux/
-cp /usr/lib/syslinux/linux.c32 ${ISO}/boot/isolinux/ldlinux.c32
-
-cp /build/configs/isolinux.cfg ${ISO}/boot/isolinux/
-
-# Make an ISO
-cd ${ISO}
-xorriso \
-  -publisher "V. CHALKOV" \
-  -as mkisofs \
-  -l -J -R -V "CONTOS" \
-  -no-emul-boot -boot-load-size 4 -boot-info-table \
-  -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
+echo ">>> [INFO] Creating ISO image..."
+xorriso -as mkisofs \
+  -o "${ISO_IMG}" \
   -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
-  -no-pad -o ${IMAGES}/contos.iso $(pwd)
+  -c boot/boot.cat \
+  -b boot/syslinux/isolinux.bin \
+  -no-emul-boot -boot-load-size 4 -boot-info-table \
+  "${ISO}"
 
-# Make a bootable disk image
-IMAGE=${IMAGES}/contos.img
-DISK=${IMAGES}/disk
-ISO=${IMAGES}/ISO
-
-mkdir -p ${ISO}
-losetup /dev/loop0 ${IMAGES}/contos.iso
-mount /dev/loop0 ${ISO}
-
-SIZE=$(du -s ${ISO} | awk '{print $1}')
-
-dd if=/dev/zero of=${IMAGE} bs=1024 count=$((${SIZE}+68+${SIZE}%2))
-losetup /dev/loop1 ${IMAGE}
-(echo c; echo n; echo p; echo 1; echo; echo; echo t; echo 4; echo a; echo w;) | fdisk /dev/loop1 || true
-
-losetup -o 32256 /dev/loop2 ${IMAGE}
-mkfs -t vfat -F 16 /dev/loop2
-
-mkdir -p ${DISK}
-mount -t vfat /dev/loop2 ${DISK}
-
-mkdir -p ${DISK}/boot/syslinux
-cp ${ISO}/boot/bzImage ${DISK}/boot/
-cp ${ISO}/boot/initrd ${DISK}/boot/
-cp ${ISO}/boot/isolinux/isolinux.cfg ${DISK}/boot/syslinux/syslinux.cfg
-umount ${ISO}
-umount ${DISK}
-
-syslinux -i -d /boot/syslinux /dev/loop2 2> ${IMAGES}/error.log
-cat ${IMAGES}/error.log >&2
-losetup -d /dev/loop2
-dd if=/usr/lib/syslinux/mbr.bin of=/dev/loop1 bs=440 count=1
-losetup -d /dev/loop1
-losetup -d /dev/loop0
-
-if [ -s ${IMAGES}/error.log ]; then
-  exit 1
+echo ">>> [INFO] Setting up loop device..."
+LOOP_ISO=$(losetup --find --show "${ISO_IMG}")
+if [ -z "$LOOP_ISO" ]; then
+    echo "ERROR: Failed to setup loop device for ISO."
+    exit 1
 fi
+
+echo ">>> [INFO] Mounting ISO..."
+mount "${LOOP_ISO}" "${IMAGES}/mnt"
+
+# Пример дальнейших действий:
+# cp -r "${IMAGES}/mnt/somefile" /some/target/location
+
+echo ">>> [INFO] Cleaning up..."
+umount "${IMAGES}/mnt"
+losetup -d "${LOOP_ISO}"
+rm -rf "${IMAGES}/mnt"
+rm -rf "${ISO}"
+
+echo ">>> [SUCCESS] post_image.sh completed successfully."

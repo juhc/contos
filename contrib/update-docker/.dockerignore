@@ -1,7 +1,0 @@
-**/.DS_Store
-
-.vagrant/
-
-Makefile
-README.md
-Vagrantfile

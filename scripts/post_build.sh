@@ -3,6 +3,8 @@ set -e
 
 ROOTFS=$1
 
+
+echo "Rsync"
 # Needs the traditional SYSV skeleton
 rm -rf ${ROOTFS}/var/run
 rsync -a --ignore-times \
@@ -15,26 +17,26 @@ rsync -a --ignore-times \
 if [ -d "${ROOTFS}/lib/modules" ]; then
   cd ${ROOTFS}/lib/modules
   cd ${ROOTFS}/lib/modules
-rm -rf ./*/kernel/build
-rm -rf ./*/kernel/source
-rm -rf ./*/kernel/sound/*
-rm -rf ./*/kernel/drivers/gpu/*
-rm -rf ./*/kernel/drivers/infiniband/*
-rm -rf ./*/kernel/drivers/isdn/*
-rm -rf ./*/kernel/drivers/media/*
-rm -rf ./*/kernel/drivers/staging/lustre/*
-rm -rf ./*/kernel/drivers/staging/comedi/*
-rm -rf ./*/kernel/fs/ocfs2/*
-rm -rf ./*/kernel/fs/reiserfs/*
-rm -rf ./*/kernel/net/bluetooth/*
-rm -rf ./*/kernel/net/mac80211/*
-rm -rf ./*/kernel/net/wireless/*
+  rm -rf ./*/kernel/build
+  rm -rf ./*/kernel/source
+  rm -rf ./*/kernel/sound/*
+  rm -rf ./*/kernel/drivers/gpu/*
+  rm -rf ./*/kernel/drivers/infiniband/*
+  rm -rf ./*/kernel/drivers/isdn/*
+  rm -rf ./*/kernel/drivers/media/*
+  rm -rf ./*/kernel/drivers/staging/lustre/*
+  rm -rf ./*/kernel/drivers/staging/comedi/*
+  rm -rf ./*/kernel/fs/ocfs2/*
+  rm -rf ./*/kernel/fs/reiserfs/*
+  rm -rf ./*/kernel/net/bluetooth/*
+  rm -rf ./*/kernel/net/mac80211/*
+  rm -rf ./*/kernel/net/wireless/*
 fi
 
 # Strip kernel modules
 GNU_TARGET_NAME=x86_64-buildroot-linux-gnu
 OBJCOPY=${GNU_TARGET_NAME}-objcopy
-find . -type f -name '*.ko' | xargs -n 1 ${OBJCOPY} --strip-unneeded
+find "${ROOTFS}" -type f -name '*.ko' | xargs -n 1 ${OBJCOPY} --strip-unneeded
 
 # Remove unnecessary files
 cd ${ROOTFS}
@@ -138,10 +140,3 @@ if [ -x "${STAGING_DIR}/usr/bin/locale" ]; then
   STRIP=${GNU_TARGET_NAME}-strip
   ${STRIP} --remove-section=.comment --remove-section=.note ${ROOTFS}/usr/bin/locale
 fi
-
-# Install C.UTF-8 locale
-mkdir -p ${ROOTFS}/usr/lib/locale
-I18NPATH=${STAGING_DIR}/usr/share/i18n:/usr/share/i18n \
-  /usr/bin/localedef --force --quiet --no-archive --little-endian --prefix=${ROOTFS} \
-    -i POSIX -f UTF-8 C.UTF-8
-mv ${ROOTFS}/usr/lib/locale/C.utf8 ${ROOTFS}/usr/lib/locale/C.UTF-8
